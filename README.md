@@ -13,6 +13,8 @@ A powerful, fast, and comprehensive subdomain enumeration tool written in Bash. 
     -   `Wayback Machine` (Web Archives)
     -   `AnubisDB`
     -   `Subfinder` (Integration)
+    -   `Amass` (Passive Mode)
+    -   `Assetfinder`
     -   `GitHub Code Search` (Native API support)
 -   **Active Enumeration**:
     -   **DNS Brute Forcing**: Uses `puredns` with smart wordlist detection (Kali Linux/SecLists support).
@@ -21,7 +23,7 @@ A powerful, fast, and comprehensive subdomain enumeration tool written in Bash. 
 -   **Smart & Clean**:
     -   Auto-installs missing dependencies (Go-based tools).
     -   Normalizes and deduplicates results strictly.
-    -   Saves final unique list to `sub.txt`.
+    -   Saves final unique list to `<domain>_sub.txt`.
 
 ## Installation
 
@@ -43,9 +45,15 @@ A powerful, fast, and comprehensive subdomain enumeration tool written in Bash. 
 
 ## Usage
 
-### Basic Usage (Passive + Active)
+### Basic Usage (Single Domain)
 ```bash
 ./subdomain_hunter.sh -d example.com
+```
+
+### Multi–Domain Input
+Scan multiple domains from a file:
+```bash
+./subdomain_hunter.sh -f domains.txt
 ```
 
 ### With GitHub API (Recommended for deep dive)
@@ -62,8 +70,8 @@ Update the internal tools (like subfinder):
 
 ## Output
 
--   **`sub.txt`**: The final, unique list of found subdomains.
--   **`<domain>_alive.txt`**: List of subdomains that are currently reachable (HTTP/HTTPS).
+-   **`<domain>_sub.txt`**: The final, unique list of found subdomains.
+-   **`<domain>_alive_sub.txt`**: List of subdomains that are currently reachable (HTTP/HTTPS).
 
 ## Disclaimer
 This tool is for educational and security testing purposes only. Usage against targets without prior consent is illegal. The author is not responsible for any misuse.
