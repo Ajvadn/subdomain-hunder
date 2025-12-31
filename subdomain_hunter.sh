@@ -223,9 +223,15 @@ scan_domain_worker() {
     # Sanitize domain for filename usage (basic)
     local SAFE_DOMAIN=$(echo "$DOMAIN" | tr -cd '[:alnum:]._-')
     
-    OUTPUT_FILE="${DOMAIN}_sub.txt"
-    # Update TEMP_BASE to include domain to avoid collisions
-    TEMP_BASE=".temp_subs_${SAFE_DOMAIN}_$$"
+    # Create directory for the domain
+    if [ ! -d "$SAFE_DOMAIN" ]; then
+        echo -e "${BLUE}[*] Creating directory: ${BOLD}$SAFE_DOMAIN${RESET}"
+        mkdir -p "$SAFE_DOMAIN"
+    fi
+    
+    OUTPUT_FILE="${SAFE_DOMAIN}/${DOMAIN}_sub.txt"
+    # Update TEMP_BASE to include domain directory to avoid collisions
+    TEMP_BASE="${SAFE_DOMAIN}/.temp_subs_${SAFE_DOMAIN}_$$"
     
     # Ensure parallel execution doesn't mix files
     # (TEMP_BASE includes PID ($$) and now domain, so safe for sequential, 
@@ -265,7 +271,7 @@ scan_domain_worker() {
 
     # Alive Probing
     echo -e "${BLUE}[*] Starting Alive Probing (httpx)...${RESET}"
-    ALIVE_FILE="${DOMAIN}_alive_sub.txt"
+    ALIVE_FILE="${SAFE_DOMAIN}/${DOMAIN}_alive_sub.txt"
     if command -v httpx &> /dev/null; then
         httpx -l "$OUTPUT_FILE" -silent -o "$ALIVE_FILE"
         ALIVE_COUNT=$(wc -l < "$ALIVE_FILE" 2>/dev/null || echo 0)
