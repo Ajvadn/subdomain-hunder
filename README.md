@@ -1,6 +1,6 @@
-# Subdomain Hunter
+# Subdomain Hunter (Go Version)
 
-A powerful, fast, and comprehensive subdomain enumeration tool written in Bash. It combines passive reconnaissance sources with active brute-forcing and permutation scanning to discover subdomains for a target.
+A powerful, fast, and comprehensive subdomain enumeration tool rewritten in Go. It combines passive reconnaissance sources with active brute-forcing and permutation scanning to discover subdomains for a target.
 
 ## Features
 
@@ -17,11 +17,11 @@ A powerful, fast, and comprehensive subdomain enumeration tool written in Bash. 
     -   `Assetfinder`
     -   `GitHub Code Search` (Native API support)
 -   **Active Enumeration**:
-    -   **DNS Brute Forcing**: Uses `puredns` with smart wordlist detection (Kali Linux/SecLists support).
-    -   **VHost Discovery**: fuzzed with `ffuf`.
+    -   **DNS Brute Forcing**: Uses `puredns`.
+    -   **VHost Discovery**: Placeholder for `ffuf`.
     -   **Alive Probing**: checks with `httpx`.
 -   **Smart & Clean**:
-    -   Auto-installs missing dependencies (Go-based tools).
+    -   Auto-installs missing dependencies.
     -   Normalizes and deduplicates results strictly.
     -   Saves final unique list to `<domain>_sub.txt`.
 
@@ -33,45 +33,45 @@ A powerful, fast, and comprehensive subdomain enumeration tool written in Bash. 
     cd subdomain-hunter
     ```
 
-2.  **Make executable:**
+2.  **Build:**
     ```bash
-    chmod +x subdomain_hunter.sh
+    go build -o subdomain-hunter .
     ```
+    
+    *Requires Go 1.21+*
 
 3.  **Dependencies**:
-    The script will automatically check for and offer to install missing Go tools (`subfinder`, `puredns`, `httpx`, `ffuf`).
-    *   Ensure you have `curl`, `jq`, and `go` installed on your system.
-    *   For Kali Linux, wordlists are auto-detected.
+    The tool relies on `subfinder`, `amass`, `assetfinder`, `puredns`, and `httpx` being in your PATH. It can attempt to update/install them via `-u` flag.
 
 ## Usage
 
 ### Basic Usage (Single Domain)
 ```bash
-./subdomain_hunter.sh -d example.com
+./subdomain-hunter -d example.com
 ```
 
 ### Multi–Domain Input
 Scan multiple domains from a file:
 ```bash
-./subdomain_hunter.sh -f domains.txt
+./subdomain-hunter -f domains.txt
 ```
 
-### With GitHub API (Recommended for deep dive)
+### With GitHub API
 Find subdomains leaked in code commits:
 ```bash
-./subdomain_hunter.sh -d example.com -g <YOUR_GITHUB_TOKEN>
+./subdomain-hunter -d example.com -g <YOUR_GITHUB_TOKEN>
 ```
 
 ### Update Tools
-Update the internal tools (like subfinder):
+Update the internal tools:
 ```bash
-./subdomain_hunter.sh -u
+./subdomain-hunter -u
 ```
 
 ## Output
 
--   **`<domain>_sub.txt`**: The final, unique list of found subdomains.
--   **`<domain>_alive_sub.txt`**: List of subdomains that are currently reachable (HTTP/HTTPS).
+-   **`<domain>/<domain>_sub.txt`**: The final, unique list of found subdomains.
+-   **`<domain>/<domain>_alive_sub.txt`**: List of subdomains that are currently reachable.
 
 ## Disclaimer
 This tool is for educational and security testing purposes only. Usage against targets without prior consent is illegal. The author is not responsible for any misuse.

@@ -1,0 +1,13 @@
+# Binaries
+subdomain-hunter
+subdomain-hunter.exe
+
+# Output folders
+example.com/
+*_subdomains.txt
+*_alive_sub.txt
+temp_subs/
+
+# OS specific
+.DS_Store
+Thumbs.db
