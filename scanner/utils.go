@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"path/filepath"
+
 )
 
 // Config holds the configuration for the scan

@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"subdomain-hunter/scanner"
+	"github.com/Ajvad-N/subdomain-hunder/scanner"
 )
 
 func main() {
