@@ -62,39 +62,44 @@ func RunHttpx(inputFile, outputFile string) {
     }
 }
 
-func RunPuredns(domain string, results chan<- string) {
-    // Check for wordlist
+func EnsureFilesExist() {
+    resolvers := "resolvers.txt"
     wordlist := "subdomains.txt"
+
+    if _, err := os.Stat(resolvers); os.IsNotExist(err) {
+        fmt.Println("[*] resolvers.txt not found. Attempting to download...")
+        DownloadFile("https://raw.githubusercontent.com/trickest/resolvers/main/resolvers.txt", resolvers)
+    }
+
     if _, err := os.Stat(wordlist); os.IsNotExist(err) {
-        // Try searching common locations or download
-        common := "/usr/share/wordlists/seclists/Discovery/DNS/subdomains-top1million-5000.txt"
-        if _, err := os.Stat(common); err == nil {
-            wordlist = common
-        } else {
-            // Download logic could go here, but for now we warn
-            fmt.Println("[!] Wordlist not found for puredns. Skipping.")
-            return
-        }
+        fmt.Println("[*] subdomains.txt not found. Attempting to download small default list...")
+        DownloadFile("https://raw.githubusercontent.com/rbsec/dnscan/master/subdomains-1000.txt", wordlist)
+    }
+}
+
+func RunPuredns(domain string, results chan<- string) {
+    EnsureFilesExist()
+    wordlist := "subdomains.txt"
+    resolvers := "resolvers.txt"
+
+    if _, err := os.Stat(wordlist); os.IsNotExist(err) {
+        fmt.Println("[!] Wordlist still missing for puredns. Skipping.")
+        return
     }
     
     fmt.Println("[*] Running Puredns...")
-    // puredns bruteforce wordlist domain -r resolvers.txt --write output
-    // We need resolvers.txt too.
-    resolvers := "resolvers.txt"
     if _, err := os.Stat(resolvers); os.IsNotExist(err) {
-         fmt.Println("[!] resolvers.txt not found. Skipping puredns.")
+         fmt.Println("[!] resolvers.txt missing. Skipping puredns.")
          return
     }
 
-    // We use a temp file for puredns output as it writes to file
     outFile := "puredns_temp.txt"
-    cmd := exec.Command("puredns", "bruteforce", wordlist, domain, "-r", resolvers, "--write", outFile)
+    cmd := exec.Command("puredns", "bruteforce", wordlist, domain, "-r", resolvers, "--write", outFile, "--quiet")
     if err := cmd.Run(); err != nil {
          fmt.Printf("[!] puredns failed: %v\n", err)
          return
     }
     
-    // Read user results
     file, err := os.Open(outFile)
     if err != nil {
         return
@@ -110,13 +115,34 @@ func RunPuredns(domain string, results chan<- string) {
 }
 
 func RunFfuf(domain string, results chan<- string) {
-    // Basic VHost discovery
-    // wordlist := "subdomains.txt" // Simplify assumption
-    fmt.Println("[*] Running ffuf (VHost)...")
+    EnsureFilesExist()
+    wordlist := "subdomains.txt"
     
-    // ffuf -w wordlist -u http://domain -H "Host: FUZZ.domain" ...
-    // This is complex to parse via pipe generally, but we can try json.
-    // For this implementation, let's skip complex parsing and just alert it's running.
-    // Real implementation requires parsing JSON output.
-    fmt.Println("[!] Ffuf implementation placeholder. Real ffuf requires JSON parsing.")
+    if _, err := os.Stat(wordlist); os.IsNotExist(err) {
+        return
+    }
+
+    fmt.Println("[*] Running ffuf (VHost)...")
+    // ffuf -w wordlist -u http://domain -H "Host: FUZZ.domain" -mc 200,301,302 -s
+    // Using -s for silent output (only results)
+    cmd := exec.Command("ffuf", "-w", wordlist, "-u", "http://"+domain, "-H", "Host: FUZZ."+domain, "-mc", "200,301,302", "-s")
+    stdout, err := cmd.StdoutPipe()
+    if err != nil {
+        return
+    }
+
+    if err := cmd.Start(); err != nil {
+        return
+    }
+
+    scanner := bufio.NewScanner(stdout)
+    for scanner.Scan() {
+        line := scanner.Text()
+        // ffuf -s returns the fuzzed value (the subdomain part)
+        if line != "" {
+            results <- line + "." + domain
+        }
+    }
+    cmd.Wait()
+    fmt.Println(" -> ffuf done.")
 }

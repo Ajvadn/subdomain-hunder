@@ -23,25 +23,26 @@ A powerful, fast, and comprehensive subdomain enumeration tool rewritten in Go. 
 -   **Smart & Clean**:
     -   Auto-installs missing dependencies.
     -   Normalizes and deduplicates results strictly.
-    -   Saves final unique list to `<domain>_sub.txt`.
+    -   Saves results directly to the current directory.
 
 ## Installation
 
-1.  **Clone the repository:**
+1.  **Direct Installation:**
     ```bash
-    git clone https://github.com/yourusername/subdomain-hunter.git
-    cd subdomain-hunter
+    go install github.com/Ajvad-N/mass-range-subfinder@latest
     ```
 
-2.  **Build:**
+2.  **Manual Clone and Build:**
     ```bash
+    git clone https://github.com/Ajvad-N/mass-range-subfinder.git
+    cd mass-range-subfinder
     go build -o subdomain-hunter .
     ```
     
     *Requires Go 1.21+*
 
 3.  **Dependencies**:
-    The tool relies on `subfinder`, `amass`, `assetfinder`, `puredns`, and `httpx` being in your PATH. It can attempt to update/install them via `-u` flag.
+    The tool relies on `subfinder`, `amass`, `assetfinder`, `puredns`, and `httpx` being in your PATH. It can attempt to update/install them via the `-u` flag.
 
 ## Usage
 
@@ -70,8 +71,10 @@ Update the internal tools:
 
 ## Output
 
--   **`<domain>/<domain>_sub.txt`**: The final, unique list of found subdomains.
--   **`<domain>/<domain>_alive_sub.txt`**: List of subdomains that are currently reachable.
+The results are saved in the current directory where the tool is executed:
+
+-   **`sub-<domain>.txt`**: The final, unique list of found subdomains.
+-   **`alive-sub-<domain>.txt`**: List of subdomains that are currently reachable (probed by `httpx`).
 
 ## Disclaimer
 This tool is for educational and security testing purposes only. Usage against targets without prior consent is illegal. The author is not responsible for any misuse.

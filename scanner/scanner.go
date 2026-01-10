@@ -1,24 +1,23 @@
 package scanner
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 )
 
 func ScanDomain(domain string, config Config) {
 	fmt.Printf("[+] Starting subdomain enumeration for: %s\n", domain)
 	
-	// Create directory
-	safeDomain := domain // In real app, sanitization needed
-	if err := os.MkdirAll(safeDomain, 0755); err != nil {
-		fmt.Printf("[!] Error creating directory: %v\n", err)
+	// Create system temp directory for interim results
+	tempDir, err := os.MkdirTemp("", "subhunter-" + domain + "-*")
+	if err != nil {
+		fmt.Printf("[!] Error creating temp directory: %v\n", err)
 		return
 	}
-
-	tempDir := filepath.Join(safeDomain, "temp_subs")
-	os.MkdirAll(tempDir, 0755)
 	defer os.RemoveAll(tempDir) // Cleanup on exit
 
 	var wg sync.WaitGroup
@@ -31,12 +30,9 @@ func ScanDomain(domain string, config Config) {
 		RunAlienVault,
 		RunRapidDNS,
 		RunAnubis,
-		RunWayback, // Note: Wayback implementation needs care for large outputs
+		RunWayback, 
+		RunThreatMiner,
 	}
-
-	// We'll wrap external tool runners separately or here
-	// External tools usually write to file or stdout.
-	// For this plan, let's keep it simple: API sources stream to channel.
 	
 	for _, runner := range runners {
 		wg.Add(1)
@@ -59,21 +55,18 @@ func ScanDomain(domain string, config Config) {
 		RunAssetfinder(domain, resultsChan)
 	}()
     
-    // Amass is slow, maybe run parallel too
     wg.Add(1)
     go func() {
         defer wg.Done()
         RunAmass(domain, resultsChan)
     }()
 
-    // Puredns
     wg.Add(1)
     go func() {
         defer wg.Done()
         RunPuredns(domain, resultsChan)
     }()
 
-    // Ffuf
     wg.Add(1)
     go func() {
         defer wg.Done()
@@ -91,10 +84,9 @@ func ScanDomain(domain string, config Config) {
 
 
 	// Collector routine
-	outputFile := filepath.Join(safeDomain, domain+"_sub.txt")
+	outputFile := "sub-" + domain + ".txt"
 	
 	// We need to wait for writers to finish before closing channel
-	// We'll do that in a separate goroutine
 	go func() {
 		wg.Wait()
 		close(resultsChan)
@@ -124,11 +116,27 @@ func ScanDomain(domain string, config Config) {
 	fmt.Printf("[+] Results saved to %s\n", outputFile)
 
     // Alive Probing
-    RunHttpx(outputFile, filepath.Join(safeDomain, domain+"_alive_sub.txt"))
+    aliveOutputFile := "alive-sub-" + domain + ".txt"
+    RunHttpx(outputFile, aliveOutputFile)
 }
 
 func ScanFile(filename string, config Config) {
-    // Read file and loop ScanDomain
-    // Implementation needed
-    fmt.Println("[*] Scanning from file is not fully implemented yet in this step.")
+    file, err := os.Open(filename)
+    if err != nil {
+        fmt.Printf("[!] Error opening file: %v\n", err)
+        return
+    }
+    defer file.Close()
+
+    scanner := bufio.NewScanner(file)
+    for scanner.Scan() {
+        domain := strings.TrimSpace(scanner.Text())
+        if domain != "" {
+            ScanDomain(domain, config)
+        }
+    }
+
+    if err := scanner.Err(); err != nil {
+        fmt.Printf("[!] Error reading file: %v\n", err)
+    }
 }

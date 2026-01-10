@@ -24,14 +24,14 @@ func main() {
 	// Show Banner
 	printBanner()
 
-	if *updatePtr {
-		scanner.UpdateTools()
-		if *domainPtr == "" && *filePtr == "" {
-			return
-		}
-	}
+	// Automatically update/check tools before running
+	scanner.UpdateTools()
 
 	if *domainPtr == "" && *filePtr == "" {
+		if *updatePtr {
+			// If user only wanted update, we can stop here
+			return
+		}
 		flag.Usage()
 		os.Exit(1)
 	}
@@ -48,7 +48,14 @@ func main() {
 }
 
 func printBanner() {
-	// Simple one-line banner without italics as requested
-	fmt.Println("Subdomain Hunter by Ajvad-N")
-	fmt.Println("===========================")
+	// ANSI Color Codes
+	const (
+		Reset  = "\033[0m"
+		Cyan   = "\033[36m"
+		Yellow = "\033[33m"
+		Bold   = "\033[1m"
+	)
+
+	fmt.Printf("%s%sSubdomain Hunter by Ajvad-N%s\n", Bold, Cyan, Reset)
+	fmt.Printf("%s===========================%s\n", Yellow, Reset)
 }
